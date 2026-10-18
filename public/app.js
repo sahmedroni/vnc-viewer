@@ -28,6 +28,8 @@ const savedSection = document.getElementById("saved-section");
 const savedList = document.getElementById("saved-list");
 const savedSearch = document.getElementById("saved-search");
 const savedNoMatch = document.getElementById("saved-nomatch");
+const savedCount = document.getElementById("saved-count");
+const historyCount = document.getElementById("history-count");
 const historySection = document.getElementById("history-section");
 const historyList = document.getElementById("history-list");
 const sidebarEmpty = document.getElementById("sidebar-empty");
@@ -148,6 +150,26 @@ async function migrateLegacySaved() {
 
 const formatTarget = (e) => `${e.host}:${e.port}`;
 
+// Inline icons for row actions. Stroke-only, so they inherit button colour.
+const ICONS = {
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10-10a2.8 2.8 0 0 0-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9l.8-12"/><path d="M10 11v6M14 11v6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  bookmark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16l-6-4.2L6 20z"/></svg>',
+  bookmarked: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M6 4h12v16l-6-4.2L6 20z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg>',
+};
+
+function iconButton(icon, label, className = "icon") {
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = className;
+  btn.innerHTML = ICONS[icon];
+  btn.title = label;
+  btn.setAttribute("aria-label", label);
+  return btn;
+}
+
 function renderRow(entry, kind) {
   const li = document.createElement("li");
 
@@ -180,61 +202,47 @@ function renderRow(entry, kind) {
     connect(entry.host, Number(entry.port), passwordInput.value);
   });
 
-  const action = document.createElement("button");
-  action.type = "button";
-  action.className = "icon";
-
   if (kind === "saved") {
-    const edit = document.createElement("button");
-    edit.type = "button";
-    edit.className = "icon";
-    edit.textContent = "Edit";
-    edit.title = "Edit this saved connection";
-    edit.addEventListener("click", () => swapToEditor(li, entry, row, action, edit));
+    const edit = iconButton("edit", "Edit this saved connection");
+    const remove = iconButton("trash", "Remove from saved connections");
 
-    action.textContent = "Remove";
-    action.title = "Remove from saved connections";
-    action.addEventListener("click", async () => {
-      action.disabled = true;
+    remove.addEventListener("click", async () => {
+      remove.disabled = true;
       try {
         await removeSaved(entry.host, Number(entry.port));
       } catch (err) {
-        action.disabled = false;
+        remove.disabled = false;
         showError(`Could not remove: ${err.message}`);
       }
     });
 
-    li.append(row, edit, action);
+    edit.addEventListener("click", () => swapToEditor(li, entry, row, remove, edit));
+
+    li.append(row, edit, remove);
     return li;
   }
 
   if (isSaved(entry.host, Number(entry.port))) {
-    action.textContent = "Saved";
-    action.disabled = true;
+    const saved = iconButton("bookmarked", "Already saved", "icon is-saved");
+    saved.disabled = true;
+    li.append(row, saved);
   } else {
-    action.textContent = "Save";
-    action.title = "Save this connection";
-    action.addEventListener("click", async () => {
-      action.disabled = true;
+    const save = iconButton("bookmark", "Save this connection");
+    save.addEventListener("click", async () => {
+      save.disabled = true;
       try {
         await saveConnection(entry.host, Number(entry.port), labelInput.value.trim());
       } catch (err) {
-        action.disabled = false;
+        save.disabled = false;
         showError(`Could not save: ${err.message}`);
       }
     });
+    li.append(row, save);
   }
-
-  li.append(row, action);
 
   // Recent entries also get a small dismiss button.
   if (kind === "history") {
-    const dismiss = document.createElement("button");
-    dismiss.type = "button";
-    dismiss.className = "icon dismiss";
-    dismiss.textContent = "×"; // ×
-    dismiss.title = "Remove from recent";
-    dismiss.setAttribute("aria-label", `Remove ${formatTarget(entry)} from recent`);
+    const dismiss = iconButton("close", `Remove ${formatTarget(entry)} from recent`, "icon dismiss");
     dismiss.addEventListener("click", () => removeHistory(entry.host, Number(entry.port)));
     li.append(dismiss);
   }
@@ -270,15 +278,10 @@ function swapToEditor(li, entry, row, removeBtn, editBtn) {
   portInputEl.max = "65535";
   portInputEl.value = String(originalPort);
 
-  const save = document.createElement("button");
+  const save = iconButton("check", "Save changes");
   save.type = "submit";
-  save.className = "icon";
-  save.textContent = "Save";
 
-  const cancel = document.createElement("button");
-  cancel.type = "button";
-  cancel.className = "icon";
-  cancel.textContent = "Cancel";
+  const cancel = iconButton("close", "Cancel editing");
 
   const error = document.createElement("p");
   error.className = "error";
@@ -359,10 +362,13 @@ function renderLists() {
   savedList.replaceChildren(...shown.map((e) => renderRow(e, "saved")));
   savedNoMatch.hidden = shown.length > 0 || saved.length === 0;
   savedNoMatch.textContent = query ? "No matching connections." : "";
+  // Show how many match while searching, otherwise the total.
+  savedCount.textContent = query ? `${shown.length}/${saved.length}` : String(saved.length);
 
   const history = readJson(HISTORY_KEY);
   historySection.hidden = history.length === 0;
   historyList.replaceChildren(...history.map((e) => renderRow(e, "history")));
+  historyCount.textContent = String(history.length);
 
   sidebarEmpty.hidden = saved.length > 0 || history.length > 0;
 }

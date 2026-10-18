@@ -293,13 +293,67 @@ button:disabled {
 
 /* ---------- saved / recent ---------- */
 
-.conn-section h2 {
-  margin: 0 0 10px;
+.conn-section summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 2px;
+  margin-bottom: 8px;
   font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  border-radius: 6px;
+}
+
+.conn-section summary::-webkit-details-marker {
+  display: none;
+}
+
+.conn-section summary::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+  flex: 0 0 auto;
+  margin-right: 2px;
+}
+
+.conn-section[open] summary::before {
+  transform: rotate(45deg);
+}
+
+.conn-section summary:hover {
+  color: var(--text);
+}
+
+.conn-section summary:focus-visible {
+  outline: none;
+  box-shadow: var(--glow);
+}
+
+.count {
+  margin-left: auto;
+  padding: 1px 7px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--text);
+  background: rgb(255 255 255 / 0.08);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.conn-body {
+  display: flex;
+  flex-direction: column;
 }
 
 .search {
@@ -317,12 +371,42 @@ button:disabled {
 .conn-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 4px 0 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
   max-height: 40vh;
   overflow-y: auto;
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgb(139 92 246 / 0.5) transparent;
+  scrollbar-gutter: stable;
+}
+
+/* WebKit / Blink */
+.conn-list::-webkit-scrollbar {
+  width: 9px;
+}
+
+.conn-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conn-list::-webkit-scrollbar-thumb {
+  background: rgb(139 92 246 / 0.32);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+
+.conn-list::-webkit-scrollbar-thumb:hover {
+  background: rgb(139 92 246 / 0.6);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+
+.conn-list::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .conn-list li {
@@ -370,15 +454,32 @@ button:disabled {
 }
 
 .conn-list .icon {
-  padding: 8px 11px;
-  font-size: 11.5px;
-  color: var(--muted);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  min-width: 30px;
+  padding: 0;
   align-self: center;
+  color: var(--muted);
+  border-color: transparent;
+  border-radius: 9px;
+}
+
+.conn-list .icon svg {
+  width: 15px;
+  height: 15px;
 }
 
 .conn-list .icon:hover:not(:disabled) {
   color: var(--text);
+  background: rgb(255 255 255 / 0.07);
   border-color: rgb(139 92 246 / 0.45);
+}
+
+/* Already-saved marker on a recent row */
+.conn-list .icon.is-saved {
+  color: var(--violet);
+  opacity: 0.75;
 }
 
 /* Small × on recent rows */
@@ -388,8 +489,6 @@ button:disabled {
   width: 28px;
   padding: 0;
   align-self: center;
-  font-size: 16px;
-  line-height: 1;
   color: var(--muted);
   border-radius: 9px;
 }
@@ -433,9 +532,16 @@ button:disabled {
 }
 
 .row-editor .icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  padding: 0;
   align-self: stretch;
-  padding: 0 10px;
-  font-size: 12px;
+}
+
+.row-editor .icon svg {
+  width: 15px;
+  height: 15px;
 }
 
 .row-editor .error {

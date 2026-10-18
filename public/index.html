@@ -11,25 +11,35 @@
     <!-- Connect: sidebar (saved + recent) | form -->
     <main id="connect-view" class="connect-view">
       <aside class="sidebar">
-        <section id="saved-section" class="conn-section" hidden>
-          <h2>Saved connections</h2>
-          <input
-            id="saved-search"
-            class="search"
-            type="search"
-            placeholder="Search saved…"
-            aria-label="Search saved connections"
-            spellcheck="false"
-            autocomplete="off"
-          />
-          <p id="saved-nomatch" class="empty" hidden>No matching connections.</p>
-          <ul id="saved-list" class="conn-list"></ul>
-        </section>
+        <details id="saved-section" class="conn-section" open hidden>
+          <summary>
+            <span>Saved connections</span>
+            <span id="saved-count" class="count"></span>
+          </summary>
+          <div class="conn-body">
+            <input
+              id="saved-search"
+              class="search"
+              type="search"
+              placeholder="Search saved…"
+              aria-label="Search saved connections"
+              spellcheck="false"
+              autocomplete="off"
+            />
+            <p id="saved-nomatch" class="empty" hidden>No matching connections.</p>
+            <ul id="saved-list" class="conn-list"></ul>
+          </div>
+        </details>
 
-        <section id="history-section" class="conn-section" hidden>
-          <h2>Recent</h2>
-          <ul id="history-list" class="conn-list"></ul>
-        </section>
+        <details id="history-section" class="conn-section" open hidden>
+          <summary>
+            <span>Recent</span>
+            <span id="history-count" class="count"></span>
+          </summary>
+          <div class="conn-body">
+            <ul id="history-list" class="conn-list"></ul>
+          </div>
+        </details>
 
         <p id="sidebar-empty" class="empty">No saved or recent connections yet.</p>
       </aside>
