@@ -1,0 +1,30 @@
+services:
+  vnc-relay:
+    build: .
+    image: vnc-relay:latest
+    container_name: vnc-relay
+    restart: unless-stopped
+    # Pass the same .env.local used for local dev into the container.
+    # Compose's ${VAR} interpolation only reads a file named `.env`, so the
+    # token is supplied here instead. Values in `environment` win over this.
+    env_file:
+      - .env.local
+    environment:
+      # Bind inside the container; the published port below controls exposure.
+      HOST: 0.0.0.0
+      PORT: 6080
+    ports:
+      # Loopback only by default. Change to "6080:6080" to expose on the LAN,
+      # or bind a specific address such as "192.168.100.10:6080:6080".
+      - "127.0.0.1:6080:6080"
+    volumes:
+      # Saved connections survive image rebuilds and redeploys.
+      - connections:/app/connections
+    # Reaching VNC hosts on the physical LAN from a bridged container can be
+    # blocked by some host firewall setups. If targets time out, switch to
+    # host networking instead of `ports:`:
+    #   network_mode: host
+    #   (and drop `ports:` above; the relay then listens on 127.0.0.1:6080)
+
+volumes:
+  connections:

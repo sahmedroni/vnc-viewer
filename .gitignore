@@ -1,0 +1,24 @@
+# Secrets — never commit the relay token
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+
+# Runtime data (saved connections live on the Docker volume in deployment)
+connections/*.json
+connections/*.json.tmp
+
+# Build / tooling output
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+
+# Editor / OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

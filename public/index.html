@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="proxy-token" content="__PROXY_TOKEN__" />
+    <title>VNC Connect</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <!-- Connect: sidebar (saved + recent) | form -->
+    <main id="connect-view" class="connect-view">
+      <aside class="sidebar">
+        <section id="saved-section" class="conn-section" hidden>
+          <h2>Saved connections</h2>
+          <input
+            id="saved-search"
+            class="search"
+            type="search"
+            placeholder="Search saved…"
+            aria-label="Search saved connections"
+            spellcheck="false"
+            autocomplete="off"
+          />
+          <p id="saved-nomatch" class="empty" hidden>No matching connections.</p>
+          <ul id="saved-list" class="conn-list"></ul>
+        </section>
+
+        <section id="history-section" class="conn-section" hidden>
+          <h2>Recent</h2>
+          <ul id="history-list" class="conn-list"></ul>
+        </section>
+
+        <p id="sidebar-empty" class="empty">No saved or recent connections yet.</p>
+      </aside>
+
+      <section class="main-pane">
+        <form id="connect-form" class="card connect-form" autocomplete="off">
+          <h1>Connect to a VNC server</h1>
+          <p class="hint">Enter the address of the machine running a VNC server.</p>
+
+          <label>
+            <span>Host / IP address</span>
+            <input
+              id="host"
+              name="host"
+              type="text"
+              placeholder="192.168.1.50"
+              required
+              spellcheck="false"
+              autocapitalize="off"
+            />
+          </label>
+
+          <label>
+            <span>Port</span>
+            <input id="port" name="port" type="number" value="5900" min="1" max="65535" required />
+          </label>
+
+          <label>
+            <span>Name <em>(optional, for saved connections)</em></span>
+            <input id="label" name="label" type="text" placeholder="Office desktop" />
+          </label>
+
+          <label>
+            <span>VNC password <em>(optional, never saved)</em></span>
+            <input id="password" name="password" type="password" placeholder="Leave blank if none" />
+          </label>
+
+          <div class="actions">
+            <button type="submit" class="primary">Connect</button>
+            <button id="save-conn" type="button">Save</button>
+          </div>
+          <p id="form-error" class="error" role="alert" hidden></p>
+        </form>
+      </section>
+    </main>
+
+    <!-- Active session: full-screen modal over the connect screen -->
+    <div id="viewer-view" class="modal session-modal" hidden role="dialog" aria-modal="true" aria-label="VNC session">
+      <section class="session-card">
+        <div class="toolbar">
+          <span id="status" class="status status-connecting">connecting</span>
+          <span id="target-label" class="target"></span>
+          <span class="spacer"></span>
+          <button id="cad" type="button" class="tool" hidden title="Send Ctrl+Alt+Delete to the remote" aria-label="Send Ctrl+Alt+Delete">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+              <rect x="2.5" y="4" width="19" height="14" rx="2.5" />
+              <path d="M7 21h10M8 9.5l2 2M16 9.5l-2 2M12 14v1.5" />
+            </svg>
+          </button>
+          <button id="paste" type="button" class="tool" hidden title="Send the local clipboard to the remote (Ctrl+V)" aria-label="Paste clipboard into remote">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="8" y="3" width="8" height="4" rx="1.5" />
+              <path d="M16 5h2.5A1.5 1.5 0 0 1 20 6.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 19.5v-13A1.5 1.5 0 0 1 5.5 5H8" />
+            </svg>
+          </button>
+          <button id="fullscreen" type="button" class="tool" hidden title="Toggle fullscreen" aria-label="Toggle fullscreen">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 9V5.5A1.5 1.5 0 0 1 5.5 4H9M15 4h3.5A1.5 1.5 0 0 1 20 5.5V9M20 15v3.5a1.5 1.5 0 0 1-1.5 1.5H15M9 20H5.5A1.5 1.5 0 0 1 4 18.5V15" />
+            </svg>
+          </button>
+          <button id="disconnect" type="button" class="tool tool-danger" hidden title="Disconnect" aria-label="Disconnect">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 8l4-4M9 16l-4 4M13.5 5.5l5 5M5.5 13.5l5 5M3 6l3-3 4 4-3 3zM14 15l3-3 4 4-3 3z" />
+            </svg>
+          </button>
+        </div>
+        <div id="screen" class="screen" tabindex="0"></div>
+
+        <!-- Password prompt shown when the server asks for credentials -->
+        <div id="password-modal" class="modal" hidden>
+          <form id="password-form" class="modal-card" autocomplete="off">
+            <h2>Password required</h2>
+            <p class="hint">The server refused the session without credentials.</p>
+            <label>
+              <span>VNC password</span>
+              <input id="prompt-password" type="password" name="vnc-password" autocomplete="current-password" />
+            </label>
+            <p id="password-error" class="error" role="alert" hidden></p>
+            <div class="actions">
+              <button type="submit" class="primary">Unlock</button>
+              <button id="password-cancel" type="button">Cancel</button>
+            </div>
+          </form>
+        </div>
+      </section>
+      <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
